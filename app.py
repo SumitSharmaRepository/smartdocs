@@ -1,5 +1,4 @@
-from dotenv import load_dotenv
-load_dotenv()
+import os
 
 import streamlit as st
 import anthropic
@@ -7,7 +6,12 @@ import PyPDF2
 import io
 
 # Initialize Claude client
-client = anthropic.Anthropic()
+#client = anthropic.Anthropic()
+
+#for streamlit cloud deployment, we use st.secrets to securely store the API key
+client = anthropic.Anthropic(
+    api_key=st.secrets.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+)
 
 def extract_text_from_pdf(pdf_file):
     """Extract text from uploaded PDF file"""
