@@ -5,6 +5,29 @@ Format: Version · Date · What changed and why.
 
 ---
 
+## [V3.0] - 2026-04-30
+
+### Added
+- Page range selection — users choose which pages 
+  to process from large documents using From/To inputs.
+- Total page count displayed after upload.
+- Smart re-extraction — PDF only re-read when page 
+  range actually changes, not on every rerun.
+- Large file error now includes helpful links to 
+  SmallPDF and ILovePDF for compression.
+- File caption shows filename, page range, and size.
+
+### Improved
+- extract_text_from_pdf now accepts page range parameters.
+- File bytes read once upfront and reused — prevents 
+  Streamlit file exhaustion bug.
+- Chat history clears automatically when page range 
+  changes — prevents stale answers.
+
+### Fixed
+- From > To page validation prevents invalid ranges.
+- New file upload properly resets all state.
+
 ## [V2.0] - 2026-04-29
 
 ### Added
