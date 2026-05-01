@@ -4,7 +4,7 @@ Upload any PDF and ask questions in plain English.
 Powered by Claude AI.
 
 ## 🌐 Live Demo
-👉 [Try SmartDocs](https://smartdocs-ai.streamlit.app)
+👉 [Try SmartDocs](https://asksmartdocs-ai.streamlit.app)
 
 ## 🎥 Demo
 ![alt text](image.png)
