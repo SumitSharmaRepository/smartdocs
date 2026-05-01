@@ -8,6 +8,9 @@ Powered by Claude AI.
 
 ## 🎥 Demo
 ![alt text](image.png)
+## smart-docs V2
+<img width="1076" height="490" alt="image" src="https://github.com/user-attachments/assets/aeeceb52-8a00-4a26-a830-5ef142410ae0" />
+
 
 ## What It Does
 - Upload any PDF document
