@@ -59,6 +59,9 @@ defaults = {
     "chat_history": [],
     "api_key": "",
     "client": None,
+    "total_pages": None,
+    "page_from": 1,
+    "page_to": 1,
 }
 for key, val in defaults.items():
     if key not in st.session_state:
@@ -81,11 +84,14 @@ def get_client():
     return anthropic.Anthropic(api_key=key)
 
 
-def extract_text_from_pdf(pdf_file) -> str:
-    pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_file.read()))
+def extract_text_from_pdf(file_bytes: bytes, start_page: int = 1, end_page: int = None) -> str:
+    """Extract text from a page range (1-indexed, inclusive)."""
+    pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+    if end_page is None:
+        end_page = len(pdf_reader.pages)
     pages = []
-    for i, page in enumerate(pdf_reader.pages):
-        text = page.extract_text()
+    for i in range(start_page - 1, end_page):
+        text = pdf_reader.pages[i].extract_text()
         if text:
             pages.append(f"--- Page {i + 1} ---\n{text}")
     return "\n".join(pages)
@@ -157,18 +163,62 @@ uploaded_file = st.file_uploader(
 if uploaded_file is not None:
     # Size check
     file_bytes = uploaded_file.getvalue()
+    file_size_mb = len(file_bytes) / 1024 / 1024
     if len(file_bytes) > MAX_FILE_SIZE_BYTES:
         st.error(
-            f"File is too large ({len(file_bytes) / 1024 / 1024:.1f} MB). "
+            f"File is too large ({file_size_mb:.1f} MB). "
             f"Please upload a PDF under {MAX_FILE_SIZE_MB} MB."
+        )
+        st.info(
+            "Need to compress your PDF? Try these free tools:\n\n"
+            "- [SmallPDF](https://smallpdf.com)\n"
+            "- [ILovePDF](https://www.ilovepdf.com)"
         )
         st.stop()
 
-    # New file — parse it
+    # New file — get total pages and reset range
     if uploaded_file.name != st.session_state["document_name"]:
+        pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+        total_pages = len(pdf_reader.pages)
+        st.session_state["total_pages"] = total_pages
+        st.session_state["document_name"] = uploaded_file.name
+        st.session_state["page_from"] = 1
+        st.session_state["page_to"] = total_pages
+        st.session_state["document_text"] = None
+        st.session_state["chat_history"] = []
+
+    total_pages = st.session_state["total_pages"]
+    st.write(f"Total pages: **{total_pages}**")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        page_from = st.number_input(
+            "From page", min_value=1, max_value=total_pages,
+            value=st.session_state["page_from"],
+        )
+    with col2:
+        page_to = st.number_input(
+            "To page", min_value=1, max_value=total_pages,
+            value=st.session_state["page_to"],
+        )
+
+    if page_from > page_to:
+        st.error("'From page' must be less than or equal to 'To page'.")
+        st.stop()
+
+    # Re-extract when range changes or text not yet loaded
+    range_changed = (
+        page_from != st.session_state["page_from"]
+        or page_to != st.session_state["page_to"]
+    )
+    if st.session_state["document_text"] is None or range_changed:
+        st.session_state["page_from"] = page_from
+        st.session_state["page_to"] = page_to
+        if range_changed:
+            st.session_state["chat_history"] = []
         with st.spinner("Reading document..."):
             try:
-                text = extract_text_from_pdf(uploaded_file)
+                text = extract_text_from_pdf(file_bytes, page_from, page_to)
                 if not text.strip():
                     st.warning(
                         "No readable text found in this PDF. "
@@ -176,16 +226,15 @@ if uploaded_file is not None:
                     )
                     st.stop()
                 st.session_state["document_text"] = text
-                st.session_state["document_name"] = uploaded_file.name
-                st.session_state["chat_history"] = []
             except Exception as e:
                 st.error(f"Could not read PDF: {e}")
                 st.stop()
 
-    st.markdown(
-        f'<div class="doc-badge">📄 {st.session_state["document_name"]}'
-        f' &nbsp;·&nbsp; {len(file_bytes) / 1024:.0f} KB</div>',
-        unsafe_allow_html=True,
+    file_size_kb = len(file_bytes) / 1024
+    st.caption(
+        f"📄 {st.session_state['document_name']} "
+        f"· Pages {st.session_state['page_from']}–{st.session_state['page_to']} "
+        f"· {file_size_kb:.0f} KB"
     )
 
 # ============================================
