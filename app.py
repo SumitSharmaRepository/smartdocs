@@ -13,11 +13,11 @@ MAX_FILE_SIZE_MB = 10
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 st.set_page_config(
-    page_title="SmartDocs",
+    page_title="SmartDocs — AI Document Assistant",
     page_icon="📄",
     layout="centered",
 )
-
+st.caption("Upload any PDF. Ask questions. Get instant answers.")
 # ============================================
 # Custom CSS
 # ============================================
