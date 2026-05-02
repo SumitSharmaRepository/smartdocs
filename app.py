@@ -5,6 +5,7 @@ import os
 import streamlit as st
 import anthropic
 import io
+import pdfplumber
 
 # ============================================
 # Config
@@ -71,7 +72,7 @@ def extract_text_from_pdf(
 ) -> str:
     """Extract and clean text from a page range (1-indexed, inclusive)."""
     import re
-    pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+    pdf_reader = pdfplumber.open(io.BytesIO(file_bytes))
     if end_page is None:
         end_page = len(pdf_reader.pages)
     pages = []
@@ -112,7 +113,14 @@ def extract_text_from_pdf(
             text = re.sub(r' {2,}', ' ', text)
 
             pages.append(f"--- Page {i + 1} ---\n{text}")
+    pdf_reader.close()
     return "\n".join(pages)
+
+
+def get_pdf_page_count(file_bytes: bytes) -> int:
+    """Return the number of pages in a PDF."""
+    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+        return len(pdf.pages)
 
 
 def ask_claude(document_text: str, chat_history: list) -> str:
@@ -200,8 +208,7 @@ if uploaded_file is not None:
 
     # New file — get total pages and reset range
     if uploaded_file.name != st.session_state["document_name"]:
-        pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
-        total_pages = len(pdf_reader.pages)
+        total_pages = get_pdf_page_count(file_bytes)
         st.session_state["total_pages"] = total_pages
         st.session_state["document_name"] = uploaded_file.name
         st.session_state["page_from"] = 1
