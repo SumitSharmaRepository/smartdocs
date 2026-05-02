@@ -156,7 +156,26 @@ st.caption("Upload any PDF. Ask questions. Get instant answers.")
 # ============================================
 # Step 1 — API Key input
 # ============================================
-with st.expander("🔑 API Key (optional — use your own Anthropic key)", expanded=not bool(get_client())):
+# Check if a master key is already provided in the background
+# Safer check: only try to access st.secrets if it actually has content
+master_key_exists = False
+if os.getenv("ANTHROPIC_API_KEY"):
+    master_key_exists = True
+else:
+    try:
+        # We try to see if the key exists in secrets without crashing the app
+        if "ANTHROPIC_API_KEY" in st.secrets:
+            master_key_exists = True
+    except (FileNotFoundError, st.errors.StreamlitSecretNotFoundError):
+        # If no secrets file exists, we just move on
+        master_key_exists = False
+if master_key_exists:
+    expander_label = "🔑 API Key (Optional — Using system default)"
+else:
+    expander_label = "🔑 Enter your Anthropic API Key to start"
+
+with st.expander(expander_label, expanded=not bool(get_client())):
+
     user_key = st.text_input(
         "Anthropic API Key",
         type="password",
@@ -269,6 +288,9 @@ if uploaded_file is not None:
 # ============================================
 # Chat interface
 # ============================================
+# ============================================
+# Chat interface
+# ============================================
 if st.session_state["document_text"] is not None:
 
     with st.expander("Preview document text"):
@@ -276,47 +298,38 @@ if st.session_state["document_text"] is not None:
         st.text(preview + ("..." if len(st.session_state["document_text"]) > 800 else ""))
 
     st.subheader("Ask a question")
+    
+    # Use a container to keep the chat history and input together
+    chat_container = st.container()
 
-    # Render conversation
-    for msg in st.session_state["chat_history"]:
-        st.chat_message(msg["role"]).write(msg["content"])
+    with chat_container:
+        # Render conversation history
+        for msg in st.session_state["chat_history"]:
+            st.chat_message(msg["role"]).write(msg["content"])
 
-    question = st.chat_input("Ask anything about this document…")
+        # Change st.chat_input to st.text_input for better placement
+        # We use a key and on_change to make it behave like a chat bar
+        question = st.text_input(
+            "Type your question here and press Enter:",
+            placeholder="What is this document about?",
+            key="user_question_input"
+        )
 
-    if question:
-        st.chat_message("user").write(question)
+    if question and question != st.session_state.get('last_question'):
+        st.session_state['last_question'] = question
         st.session_state["chat_history"].append({"role": "user", "content": question})
-
+        
+        # Trigger the AI logic
         with st.spinner("Thinking…"):
             try:
                 answer = ask_claude(
                     st.session_state["document_text"],
                     st.session_state["chat_history"],
                 )
-            except anthropic.AuthenticationError:
-                st.error("Invalid API key. Please check the key you entered and try again.")
-                st.session_state["chat_history"].pop()  # remove the unanswered question
-                st.stop()
-            except anthropic.RateLimitError:
-                st.error("Rate limit reached. Wait a moment and try again.")
-                st.session_state["chat_history"].pop()
-                st.stop()
-            except anthropic.APIStatusError as e:
-                st.error(f"API error ({e.status_code}): {e.message}")
-                st.session_state["chat_history"].pop()
-                st.stop()
+                st.session_state["chat_history"].append({"role": "assistant", "content": answer})
+                st.rerun() # Refresh to show the answer immediately
             except Exception as e:
-                st.error(f"Something went wrong: {e}")
-                st.session_state["chat_history"].pop()
-                st.stop()
-
-        st.chat_message("assistant").write(answer)
-        st.session_state["chat_history"].append({"role": "assistant", "content": answer})
-
-    if st.session_state["chat_history"]:
-        if st.button("Clear conversation", type="secondary"):
-            st.session_state["chat_history"] = []
-            st.rerun()
+                st.error(f"Error: {e}")
 
 
 # ============================================
