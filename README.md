@@ -13,11 +13,20 @@ Powered by Claude AI.
 
 
 ## What It Does
-- Upload any PDF document
+- Upload any PDF document (up to 10MB)
+- Select a page range to focus on specific sections
 - Ask questions in plain English
 - Get accurate answers instantly
 - Full multi-turn conversation memory
 - Remembers context across multiple questions
+- Bring your own Anthropic API key or use the built-in one
+
+## V3 Highlights
+- **Page range selection** — process only the pages you need
+- **Smart re-extraction** — PDF only re-read when range changes
+- **Better file errors** — oversized files link to free compression tools
+- **Privacy notice** — clear reassurance before entering your API key
+- **10MB upload limit** enforced at the Streamlit config level
 
 ## Tech Stack
 - Python

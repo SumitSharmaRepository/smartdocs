@@ -30,23 +30,6 @@ st.markdown("""
         border-radius: 6px;
         font-weight: 500;
     }
-    .doc-badge {
-        background: #f0f2f6;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        padding: 8px 14px;
-        font-size: 0.875rem;
-        color: #374151;
-        display: inline-block;
-        margin-bottom: 8px;
-    }
-    .api-section {
-        background: #fafafa;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 16px 20px;
-        margin-bottom: 20px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -83,9 +66,13 @@ def get_client():
         return None
     return anthropic.Anthropic(api_key=key)
 
-
-def extract_text_from_pdf(file_bytes: bytes, start_page: int = 1, end_page: int = None) -> str:
-    """Extract text from a page range (1-indexed, inclusive)."""
+def extract_text_from_pdf(
+    file_bytes: bytes,
+    start_page: int = 1,
+    end_page: int = None
+) -> str:
+    """Extract and clean text from a page range (1-indexed, inclusive)."""
+    import re
     pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
     if end_page is None:
         end_page = len(pdf_reader.pages)
@@ -93,6 +80,39 @@ def extract_text_from_pdf(file_bytes: bytes, start_page: int = 1, end_page: int 
     for i in range(start_page - 1, end_page):
         text = pdf_reader.pages[i].extract_text()
         if text:
+            # Fix single character per line issue
+            # Join lines that are too short (less than 3 chars)
+            lines = text.split('\n')
+            cleaned_lines = []
+            buffer = ""
+            for line in lines:
+                stripped = line.strip()
+                if not stripped:
+                    if buffer:
+                        cleaned_lines.append(buffer.strip())
+                        buffer = ""
+                    cleaned_lines.append("")
+                elif len(stripped) <= 2:
+                    # Short fragment — likely broken word, join it
+                    buffer += stripped + " "
+                else:
+                    if buffer:
+                        buffer += stripped + " "
+                        # If buffer is now long enough flush it
+                        if len(buffer) > 20:
+                            cleaned_lines.append(buffer.strip())
+                            buffer = ""
+                    else:
+                        cleaned_lines.append(stripped)
+            if buffer:
+                cleaned_lines.append(buffer.strip())
+
+            # Remove multiple blank lines
+            text = '\n'.join(cleaned_lines)
+            text = re.sub(r'\n{3,}', '\n\n', text)
+            # Fix multiple spaces
+            text = re.sub(r' {2,}', ' ', text)
+
             pages.append(f"--- Page {i + 1} ---\n{text}")
     return "\n".join(pages)
 
@@ -131,7 +151,6 @@ st.caption("Upload a PDF and ask questions in plain English.")
 # Step 1 — API Key input
 # ============================================
 with st.expander("🔑 API Key (optional — use your own Anthropic key)", expanded=not bool(get_client())):
-    st.markdown('<div class="api-section">', unsafe_allow_html=True)
     user_key = st.text_input(
         "Anthropic API Key",
         type="password",
@@ -142,7 +161,12 @@ with st.expander("🔑 API Key (optional — use your own Anthropic key)", expan
     if user_key != st.session_state["api_key"]:
         st.session_state["api_key"] = user_key
         st.session_state["client"] = None  # reset cached client
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.caption(
+        "🔒 Your documents are never stored. "
+        "Processed in real-time and discarded. "
+        "Anthropic does not train on API data. "
+        "[Learn more](https://anthropic.com/privacy)"
+    )
 
 # Verify we have a working key before going further
 client = get_client()
