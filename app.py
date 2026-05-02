@@ -310,3 +310,22 @@ if st.session_state["document_text"] is not None:
         if st.button("Clear conversation", type="secondary"):
             st.session_state["chat_history"] = []
             st.rerun()
+
+
+# ============================================
+# Footer
+# ============================================
+st.divider()
+st.markdown(
+    """
+    <div style='text-align: center; color: #6b7280; 
+    font-size: 0.8rem; padding: 10px'>
+        Built by <a href='https://www.linkedin.com/in/sumit-sharma-dev' 
+        target='_blank' style='color: #6b7280'>Sumit Sharma</a> · 
+        <a href='https://github.com/SumitSharmaRepository/smartdocs' 
+        target='_blank' style='color: #6b7280'>GitHub</a> · 
+        © 2026 SmartDocs
+    </div>
+    """,
+    unsafe_allow_html=True
+)

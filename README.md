@@ -1,5 +1,15 @@
 # SmartDocs — Ask Your Documents
 
+# SmartDocs AI
+### Built by [Sumit Sharma](https://www.linkedin.com/in/sumit-sharma-dev)
+
+> Upload any PDF. Ask questions. Get instant answers.
+> Powered by Claude AI.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Built with Python](https://img.shields.io/badge/Built%20with-Python-blue)](https://python.org)
+[![Powered by Claude](https://img.shields.io/badge/Powered%20by-Claude%20AI-orange)](https://anthropic.com)
+
 Upload any PDF and ask questions in plain English. 
 Powered by Claude AI.
 
