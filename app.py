@@ -44,6 +44,7 @@ defaults = {
     "total_pages": None,
     "page_from": 1,
     "page_to": 1,
+    "language": "English",
 }
 for key, val in defaults.items():
     if key not in st.session_state:
@@ -128,15 +129,30 @@ def ask_claude(document_text: str, chat_history: list) -> str:
     if client is None:
         raise ValueError("No API key configured.")
 
+    language_instruction = {
+        "English": "Always respond in clear, simple English.",
+        "Hindi / हिंदी": "हमेशा सरल और स्पष्ट हिंदी में जवाब दें।",
+        "Hinglish": (
+            "Answer in Hinglish — a natural mix of Hindi and English "
+            "the way educated Indians speak. Example: 'Is document mein "
+            "bataya gaya hai ki...' Keep it conversational and easy."
+        ),
+    }
+
+    selected_language = st.session_state.get("language", "English")
+
     system_prompt = f"""You are a helpful document assistant.
 
 The user has uploaded a document. Here is the full content:
 
 {document_text}
 
+LANGUAGE INSTRUCTION:
+{language_instruction[selected_language]}
+
 Answer questions based ONLY on this document.
-If the answer is not in the document, say clearly:
-'I could not find this information in the document.'
+If the answer is not in the document, say clearly in the 
+selected language that you could not find the information.
 Be concise and accurate."""
 
     message = client.messages.create(
@@ -151,7 +167,19 @@ Be concise and accurate."""
 # Header
 # ============================================
 st.title("SmartDocs AI")
-st.caption("Upload any PDF. Ask questions. Get instant answers.")
+st.caption(
+    "Upload any PDF. Ask questions. Get instant answers. · "
+    "PDF upload करें। सवाल पूछें। तुरंत जवाब पाएं।"
+)
+language = st.selectbox(
+    "Response Language / जवाब की भाषा",
+    options=["English", "Hindi / हिंदी", "Hinglish"],
+    index=0,
+    help="Choose the language for SmartDocs AI responses"
+)
+if language != st.session_state.get("language", "English"):
+    st.session_state["chat_history"] = []
+st.session_state["language"] = language
 
 # ============================================
 # Step 1 — API Key input
@@ -293,6 +321,10 @@ if uploaded_file is not None:
 # ============================================
 if st.session_state["document_text"] is not None:
 
+    def submit_question():
+        st.session_state["pending_question"] = st.session_state["user_question_input"].strip()
+        st.session_state["user_question_input"] = ""
+
     with st.expander("Preview document text"):
         preview = st.session_state["document_text"][:800]
         st.text(preview + ("..." if len(st.session_state["document_text"]) > 800 else ""))
@@ -309,14 +341,21 @@ if st.session_state["document_text"] is not None:
 
         # Change st.chat_input to st.text_input for better placement
         # We use a key and on_change to make it behave like a chat bar
+        placeholders = {
+            "English": "Ask anything about this document…",
+            "Hindi / हिंदी": "दस्तावेज़ के बारे में कोई भी सवाल पूछें…",
+            "Hinglish": "Document ke baare mein kuch bhi puchho…",
+        }
+        selected = st.session_state.get("language", "English")
         question = st.text_input(
             "Type your question here and press Enter:",
-            placeholder="What is this document about?",
-            key="user_question_input"
+            placeholder=placeholders[selected],
+            key="user_question_input",
+            on_change=submit_question,
         )
 
-    if question and question != st.session_state.get('last_question'):
-        st.session_state['last_question'] = question
+    question = st.session_state.pop("pending_question", "")
+    if question:
         st.session_state["chat_history"].append({"role": "user", "content": question})
         
         # Trigger the AI logic

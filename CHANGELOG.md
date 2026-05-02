@@ -4,6 +4,20 @@ All notable changes to SmartDocs are documented here.
 Format: Version · Date · What changed and why.
 
 ---
+## [V4.0] - 2026-05-02
+
+### Added
+- Multi-language support — English, Hindi, Hinglish
+- Language selector dropdown with bilingual label
+- Bilingual subtitle — English and Hindi
+- Chat input placeholder changes per language
+- Chat history clears automatically on language change
+- System prompt dynamically adjusts per language
+
+### Why
+Indian professionals think in Hindi or Hinglish.
+No major PDF Q&A tool targets Hindi-speaking users.
+This makes SmartDocs AI distinctly Indian.
 
 ## [V3.0] - 2026-05-02
 

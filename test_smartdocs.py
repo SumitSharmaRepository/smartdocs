@@ -264,6 +264,11 @@ def test_no_data_written_to_disk():
 
 def test_factual_question_answered_correctly():
     try:
+        import streamlit as st
+        st.session_state["language"] = "English"
+    except Exception:
+        pass
+    try:
         client = _get_real_client()
         if client is None:
             warnings.warn("ANTHROPIC_API_KEY not set — skipping AI test")
@@ -285,6 +290,11 @@ def test_factual_question_answered_correctly():
 
 
 def test_out_of_document_question():
+    try:
+        import streamlit as st
+        st.session_state["language"] = "English"
+    except Exception:
+        pass
     try:
         client = _get_real_client()
         if client is None:
@@ -314,6 +324,11 @@ def test_out_of_document_question():
 
 
 def test_multi_turn_conversation():
+    try:
+        import streamlit as st
+        st.session_state["language"] = "English"
+    except Exception:
+        pass
     try:
         client = _get_real_client()
         if client is None:
