@@ -4,7 +4,6 @@ load_dotenv()
 import os
 import streamlit as st
 import anthropic
-import PyPDF2
 import io
 
 # ============================================
