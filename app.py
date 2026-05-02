@@ -17,7 +17,6 @@ st.set_page_config(
     page_icon="📄",
     layout="centered",
 )
-st.caption("Upload any PDF. Ask questions. Get instant answers.")
 # ============================================
 # Custom CSS
 # ============================================
@@ -143,8 +142,8 @@ Be concise and accurate."""
 # ============================================
 # Header
 # ============================================
-st.title("SmartDocs")
-st.caption("Upload a PDF and ask questions in plain English.")
+st.title("SmartDocs AI")
+st.caption("Upload any PDF. Ask questions. Get instant answers.")
 
 # ============================================
 # Step 1 — API Key input
