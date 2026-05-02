@@ -134,7 +134,7 @@ If the answer is not in the document, say clearly:
 Be concise and accurate."""
 
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-5",
         max_tokens=1024,
         system=system_prompt,
         messages=chat_history,
